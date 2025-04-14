@@ -1,0 +1,11 @@
+.container {
+  overflow-y: auto;
+  position: relative;
+  -webkit-overflow-scrolling: touch; /* 平滑滚动 */
+}
+
+/* 隐藏默认滚动条（可选） */
+.container::-webkit-scrollbar {
+  width: 0;
+  background: transparent;
+}
