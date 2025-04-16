@@ -9,31 +9,41 @@ export default function useVirtual({
   overscan = 0,
   ref
 }: UseVirtualProps) {
+  // 使用本地 ref 引用
   const localRef = useRef<HTMLDivElement>(null);
-  const containerRef = ref || localRef;
+  // 如果传入的 ref 是函数形式，使用本地 ref，否则使用传入的 ref
+  const containerRef = typeof ref === 'function' ? localRef : (ref || localRef);
   const [scrollTop, setScrollTop] = useState(0);
   const [height, setHeight] = useState(0);
 
   useEffect(() => {
     const handleScroll = throttle(() => {
-      setScrollTop(containerRef.current?.scrollTop || 0);
+      if (containerRef && 'current' in containerRef) {
+        setScrollTop(containerRef.current?.scrollTop || 0);
+      }
     }, 16);
 
     const handleResize = () => {
-      setHeight(containerRef.current?.clientHeight || 0);
+      if (containerRef && 'current' in containerRef) {
+        setHeight(containerRef.current?.clientHeight || 0);
+      }
     };
 
-    containerRef.current?.addEventListener("scroll", handleScroll);
+    if (containerRef && 'current' in containerRef && containerRef.current) {
+      containerRef.current.addEventListener("scroll", handleScroll);
+    }
     window.addEventListener("resize", handleResize);
 
     // 初始化高度
     handleResize();
 
     return () => {
-      containerRef.current?.removeEventListener("scroll", handleScroll);
+      if (containerRef && 'current' in containerRef && containerRef.current) {
+        containerRef.current.removeEventListener("scroll", handleScroll);
+      }
       window.removeEventListener("resize", handleResize);
     };
-  }, [])
+  }, []);
 
   const { start, end } = fetVisibleRange({
     scrollTop,
@@ -41,7 +51,7 @@ export default function useVirtual({
     itemHeight,
     itemCount: data.length,
     overscan,
-  })
+  });
 
   return {
     visibleItems: data.slice(start, end).map((item, index) => ({
@@ -51,5 +61,5 @@ export default function useVirtual({
     })),
     containerRef,
     totalHeight: data.length * itemHeight,
-  }
+  };
 }

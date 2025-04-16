@@ -1,4 +1,4 @@
-import { ForwardedRef, RefObject } from 'react';
+import { ForwardedRef, CSSProperties } from 'react';
 
 /** 
  * 虚拟列表组件的属性接口
@@ -20,6 +20,8 @@ export interface VirtualListProps<T> {
   overscan?: number;
   /** 容器的自定义类名 */
   className?: string;
+  /** 容器的行内样式 */
+  style?: CSSProperties;
 }
 
 /** 
