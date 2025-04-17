@@ -9,15 +9,16 @@ function App() {
   return (
     <VirtualList
       data={data}
-      itemHeight={200}
+      itemHeight={50}
       overscan={2}
       renderItem={(item) => (
         <div
           style={{
-            height: '200px',
-            borderBottom: '1px solid #eee',
+            height: '50px',
+            borderBottom: '1px solid #3a3a3a',
             padding: '20px',
-            background: '#fff'
+            background: '#fff',
+            boxSizing: 'border-box',
           }}
         >
           {item.text}
