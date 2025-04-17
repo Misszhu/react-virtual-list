@@ -9,14 +9,24 @@ function App() {
   return (
     <VirtualList
       data={data}
-      itemHeight={50}
-      overscan={5}
+      itemHeight={200}
+      overscan={2}
       renderItem={(item) => (
-        <div style={{ height: 50, borderBottom: '1px solid #eee' }}>
+        <div
+          style={{
+            height: '200px',
+            borderBottom: '1px solid #eee',
+            padding: '20px',
+            background: '#fff'
+          }}
+        >
           {item.text}
         </div>
       )}
-      style={{ height: '100vh' }}
+      style={{
+        height: '100vh',
+        overflow: 'auto'
+      }}
     />
   );
 }

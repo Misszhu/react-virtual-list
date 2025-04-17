@@ -4,7 +4,7 @@ import styles from './style.module.css';
 import { VirtualListProps } from './types';
 
 const VirtualList = forwardRef<HTMLDivElement, VirtualListProps<any>>(
-  ({ data, itemHeight, renderItem, overscan = 3, className }, ref) => {
+  ({ data, itemHeight, renderItem, overscan = 3, className, style }, ref) => {
     const { visibleItems, totalHeight, containerRef } = useVirtual({
       data,
       itemHeight,
@@ -16,15 +16,18 @@ const VirtualList = forwardRef<HTMLDivElement, VirtualListProps<any>>(
       <div
         ref={containerRef}
         className={`${styles.container} ${className || ''}`}
+        style={{ ...style, position: 'relative', overflow: 'auto' }}
       >
-        <div style={{ height: `${totalHeight}px` }}>
+        <div style={{ height: `${totalHeight}px`, position: 'relative' }}>
           {visibleItems.map(({ data, index, offset }) => (
             <div
               key={index}
               style={{
                 position: 'absolute',
                 top: `${offset}px`,
-                width: '100%'
+                left: 0,
+                width: '100%',
+                height: `${itemHeight}px`
               }}
             >
               {renderItem(data, index)}

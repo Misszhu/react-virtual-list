@@ -1,64 +1,68 @@
-import { useEffect, useRef, useState } from "react";
-import throttle from "lodash.throttle";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { UseVirtualProps } from "../types";
 import { fetVisibleRange } from "../utils/getRange";
 
 export default function useVirtual({
   data,
   itemHeight,
-  overscan = 0,
+  overscan = 3,
   ref
 }: UseVirtualProps) {
-  // 使用本地 ref 引用
   const localRef = useRef<HTMLDivElement>(null);
-  // 如果传入的 ref 是函数形式，使用本地 ref，否则使用传入的 ref
   const containerRef = typeof ref === 'function' ? localRef : (ref || localRef);
   const [scrollTop, setScrollTop] = useState(0);
-  const [height, setHeight] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(0);
 
-  useEffect(() => {
-    const handleScroll = throttle(() => {
-      if (containerRef && 'current' in containerRef) {
-        setScrollTop(containerRef.current?.scrollTop || 0);
-      }
-    }, 16);
-
-    const handleResize = () => {
-      if (containerRef && 'current' in containerRef) {
-        setHeight(containerRef.current?.clientHeight || 0);
-      }
-    };
-
-    if (containerRef && 'current' in containerRef && containerRef.current) {
-      containerRef.current.addEventListener("scroll", handleScroll);
+  // 使用 useCallback 优化滚动处理函数
+  const handleScroll = useCallback(() => {
+    if (containerRef && 'current' in containerRef) {
+      setScrollTop(containerRef.current?.scrollTop || 0);
     }
-    window.addEventListener("resize", handleResize);
+  }, []);
+
+  // 使用 ResizeObserver 监听容器大小变化
+  useEffect(() => {
+    const currentRef = containerRef && 'current' in containerRef ? containerRef.current : null;
+    if (!currentRef) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      const height = entries[0]?.contentRect.height;
+      if (height > 0) {
+        setContainerHeight(height);
+      }
+    });
+
+    resizeObserver.observe(currentRef);
+    currentRef.addEventListener("scroll", handleScroll);
 
     // 初始化高度
-    handleResize();
+    setContainerHeight(currentRef.clientHeight);
 
     return () => {
-      if (containerRef && 'current' in containerRef && containerRef.current) {
-        containerRef.current.removeEventListener("scroll", handleScroll);
-      }
-      window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
+      currentRef.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [handleScroll]);
 
   const { start, end } = fetVisibleRange({
     scrollTop,
-    height,
+    height: containerHeight,
     itemHeight,
     itemCount: data.length,
     overscan,
   });
 
+  console.log('start', start, 'end', end);
+
+
+  const visibleItems = data.slice(start, end).map((item, index) => ({
+    data: item,
+    index: start + index,
+    offset: (start + index) * itemHeight,
+  }));
+
   return {
-    visibleItems: data.slice(start, end).map((item, index) => ({
-      data: item,
-      index: start + index,
-      offset: (start + index) * itemHeight,
-    })),
+    visibleItems,
     containerRef,
     totalHeight: data.length * itemHeight,
   };

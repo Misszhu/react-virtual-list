@@ -1,6 +1,7 @@
 .container {
-  overflow-y: auto;
   position: relative;
+  overflow: auto;
+  will-change: transform;
   -webkit-overflow-scrolling: touch; /* 平滑滚动 */
 }
 
