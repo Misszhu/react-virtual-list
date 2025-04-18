@@ -3,6 +3,8 @@ import useVirtual from './hooks/useVirtual';
 import styles from './style.module.css';
 import { VirtualListProps } from './types';
 
+// HTMLDivElement 指定了 ref 的类型
+// VirtualListProps<any>: 泛型参数指定了数据项的类型
 const VirtualList = forwardRef<HTMLDivElement, VirtualListProps<any>>(
   ({ data, itemHeight, renderItem, overscan = 3, className, style }, ref) => {
     const { visibleItems, totalHeight, containerRef } = useVirtual({
