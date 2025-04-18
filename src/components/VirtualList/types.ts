@@ -53,3 +53,20 @@ export interface GetRangeParams {
   /** 上下预加载的列表项数量 */
   overscan: number;
 }
+
+/** 
+ * 虚拟列表行组件的属性接口
+ * @template T - 列表项数据的类型
+ */
+export interface VirtualRowProps<T> {
+  /** 列表项数据 */
+  data: T;
+  /** 列表项索引 */
+  index: number;
+  /** 垂直方向的偏移量 */
+  offset: number;
+  /** 列表项高度 */
+  height: number;
+  /** 渲染列表项的函数 */
+  renderItem: (item: T, index: number) => React.ReactNode;
+}

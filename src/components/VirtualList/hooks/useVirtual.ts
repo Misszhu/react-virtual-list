@@ -27,6 +27,9 @@ export default function useVirtual({
     const resizeObserver = new ResizeObserver((entries) => {
       const height = entries[0]?.contentRect.height;
       if (height > 0) {
+        // setContainerHeight 被调用后，React 将安排一次重新渲染
+        // 组件函数会重新执行
+        // 所有使用到 containerHeight 的计算都会重新执行
         setContainerHeight(height);
       }
     });

@@ -2,6 +2,7 @@ import { forwardRef } from "react";
 import useVirtual from './hooks/useVirtual';
 import styles from './style.module.css';
 import { VirtualListProps } from './types';
+import VirtualRow from "./VirtualRow";
 
 // HTMLDivElement 指定了 ref 的类型
 // VirtualListProps<any>: 泛型参数指定了数据项的类型
@@ -22,18 +23,14 @@ const VirtualList = forwardRef<HTMLDivElement, VirtualListProps<any>>(
       >
         <div style={{ height: `${totalHeight}px`, position: 'relative' }}>
           {visibleItems.map(({ data, index, offset }) => (
-            <div
+            <VirtualRow
               key={index}
-              style={{
-                position: 'absolute',
-                top: `${offset}px`,
-                left: 0,
-                width: '100%',
-                height: `${itemHeight}px`
-              }}
-            >
-              {renderItem(data, index)}
-            </div>
+              data={data}
+              index={index}
+              offset={offset}
+              height={itemHeight}
+              renderItem={renderItem}
+            />
           ))}
         </div>
       </div>
