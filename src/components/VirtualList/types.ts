@@ -26,10 +26,11 @@ export interface VirtualListProps<T> {
 
 /** 
  * 虚拟列表 Hook 的属性接口
+ * @template T - 列表数据项的类型
  */
-export interface UseVirtualProps {
+export interface UseVirtualProps<T = unknown> {
   /** 要渲染的数据数组 */
-  data: any[];
+  data: T[];
   /** 每个列表项的固定高度（单位：像素） */
   itemHeight: number;
   /** 预加载的列表项数量（上下各预加载的数量）默认值为 3 */
@@ -69,4 +70,26 @@ export interface VirtualRowProps<T> {
   height: number;
   /** 渲染列表项的函数 */
   renderItem: (item: T, index: number) => React.ReactNode;
+}
+
+/** 
+ * 测量列表项尺寸的接口
+ */
+export interface MeasureResult {
+  /** 元素高度 */
+  height: number;
+  /** 元素顶部偏移量 */
+  top: number;
+  /** 元素底部偏移量 */
+  bottom: number;
+}
+
+/**
+ * 测量函数的参数接口
+ */
+export interface MeasureParams {
+  /** 要测量的元素 */
+  element: HTMLElement;
+  /** 列表项的固定高度 */
+  itemHeight?: number;
 }

@@ -2,12 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { UseVirtualProps } from "../types";
 import { fetVisibleRange } from "../utils/getRange";
 
-export default function useVirtual({
+export default function useVirtual<T>({
   data,
   itemHeight,
   overscan = 3,
   ref
-}: UseVirtualProps) {
+}: UseVirtualProps<T>) {
   const localRef = useRef<HTMLDivElement>(null);
   const containerRef = typeof ref === 'function' ? localRef : (ref || localRef);
   const [scrollTop, setScrollTop] = useState(0);
