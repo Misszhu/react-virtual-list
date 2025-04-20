@@ -1,5 +1,10 @@
 import VirtualList from './components/VirtualList/VirtualList';
 
+interface Item {
+  id: number;
+  text: string;
+}
+
 function App() {
   const data = Array.from({ length: 10000 }, (_, i) => ({
     id: i,
@@ -7,7 +12,7 @@ function App() {
   }));
 
   return (
-    <VirtualList
+    <VirtualList<Item>
       data={data}
       itemHeight={50}
       overscan={2}
