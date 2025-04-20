@@ -4,15 +4,15 @@ import { Size } from '../types';
 /**
  * 防抖函数
  */
-function debounce<T extends (...args: any[]) => void>(
-  fn: T,
+function debounce(
+  fn: (size: Size) => void,
   delay: number
-): (...args: Parameters<T>) => void {
+): (size: Size) => void {
   let timeoutId: ReturnType<typeof setTimeout>;
 
-  return function (...args: Parameters<T>) {
+  return function (size: Size) {
     clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => fn(...args), delay);
+    timeoutId = setTimeout(() => fn(size), delay);
   };
 }
 

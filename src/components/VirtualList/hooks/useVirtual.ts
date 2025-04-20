@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { UseVirtualProps } from "../types";
 import { fetVisibleRange } from "../utils/getRange";
+import useScroll from "./useScroll";
+import useResize from "./useResize";
 
 export default function useVirtual<T>({
   data,
@@ -10,27 +12,21 @@ export default function useVirtual<T>({
 }: UseVirtualProps<T>) {
   const localRef = useRef<HTMLDivElement>(null);
   const containerRef = typeof ref === 'function' ? localRef : (ref || localRef);
-  const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
 
-  // 滚动事件监听
-  const handleScroll = useCallback(() => {
-    if (containerRef?.current) {
-      setScrollTop(containerRef.current?.scrollTop || 0);
-    }
-  }, []);
+  // 使用 useScroll 管理滚动状态
+  const { scrollTop } = useScroll({
+    elementRef: containerRef,
+  });
 
-  useEffect(() => {
-    const currentRef = containerRef?.current;
-    if (!currentRef) return;
-
-    // 监听滚动事件
-    currentRef.addEventListener("scroll", handleScroll);
-
-    return () => {
-      currentRef.removeEventListener("scroll", handleScroll);
-    };
-  }, [handleScroll]);
+  // 监听容器大小变化
+  useResize(
+    containerRef,
+    ({ height }) => {
+      setContainerHeight(height);
+    },
+    100 // 添加100ms防抖时间
+  );
 
   const { start, end } = fetVisibleRange({
     scrollTop,
@@ -50,6 +46,6 @@ export default function useVirtual<T>({
     visibleItems,
     containerRef,
     totalHeight: data.length * itemHeight,
-    setContainerHeight, // 导出此方法供 useResize 使用
+    setContainerHeight,
   };
 }
