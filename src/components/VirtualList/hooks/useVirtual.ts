@@ -13,43 +13,24 @@ export default function useVirtual<T>({
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
 
-  // 防止每次渲染都创建新的函数引用
+  // 滚动事件监听
   const handleScroll = useCallback(() => {
     if (containerRef?.current) {
       setScrollTop(containerRef.current?.scrollTop || 0);
     }
   }, []);
 
-  // 使用 ResizeObserver 监听容器大小变化
   useEffect(() => {
-    if (!containerRef?.current) return;
+    const currentRef = containerRef?.current;
+    if (!currentRef) return;
 
-    const resizeObserver = new ResizeObserver((entries) => {
-      const height = entries[0]?.contentRect.height;
-      if (height > 0) {
-        // setContainerHeight 被调用后，React 将安排一次重新渲染
-        // 组件函数会重新执行
-        // 所有使用到 containerHeight 的计算都会重新执行
-        setContainerHeight(height);
-      }
-    });
-
-    // 监听容器大小变化
-    resizeObserver.observe(containerRef.current);
     // 监听滚动事件
-    containerRef.current.addEventListener("scroll", handleScroll);
+    currentRef.addEventListener("scroll", handleScroll);
 
-    // 初始化高度
-    setContainerHeight(containerRef.current.clientHeight);
-
-    // 组件卸载时清理
-    // 取消 ResizeObserver 和 滚动事件的监听
     return () => {
-      resizeObserver.disconnect();
-
-      containerRef?.current?.removeEventListener("scroll", handleScroll);
+      currentRef.removeEventListener("scroll", handleScroll);
     };
-  }, [handleScroll]); // handleScroll 变化时需要重新绑定事件监听器
+  }, [handleScroll]);
 
   const { start, end } = fetVisibleRange({
     scrollTop,
@@ -69,5 +50,6 @@ export default function useVirtual<T>({
     visibleItems,
     containerRef,
     totalHeight: data.length * itemHeight,
+    setContainerHeight, // 导出此方法供 useResize 使用
   };
 }

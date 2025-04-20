@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import useVirtual from './hooks/useVirtual';
+import useResize from './hooks/useResize';
 import styles from './style.module.css';
 import { VirtualListProps } from './types';
 import VirtualRow from "./VirtualRow";
@@ -8,12 +9,21 @@ import VirtualRow from "./VirtualRow";
 // VirtualListProps<any>: 泛型参数指定了数据项的类型
 const VirtualList = forwardRef<HTMLDivElement, VirtualListProps<any>>(
   ({ data, itemHeight, renderItem, overscan = 3, className, style }, ref) => {
-    const { visibleItems, totalHeight, containerRef } = useVirtual({
+    const { visibleItems, totalHeight, containerRef, setContainerHeight } = useVirtual({
       data,
       itemHeight,
       overscan,
       ref
     });
+
+    // 应用 useResize 监听容器大小变化
+    useResize(
+      containerRef,
+      ({ height }) => {
+        setContainerHeight(height);
+      },
+      100 // 添加100ms防抖时间
+    );
 
     return (
       <div

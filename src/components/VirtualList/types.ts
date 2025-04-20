@@ -93,3 +93,13 @@ export interface MeasureParams {
   /** 列表项的固定高度 */
   itemHeight?: number;
 }
+
+/** 
+ * 元素尺寸的接口定义
+ */
+export interface Size {
+  /** 元素宽度 */
+  width: number;
+  /** 元素高度 */
+  height: number;
+}
