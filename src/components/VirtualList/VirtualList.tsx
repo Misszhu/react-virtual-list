@@ -1,9 +1,10 @@
 import { forwardRef } from "react";
 import useVirtual from './hooks/useVirtual';
 import useResize from './hooks/useResize';
-import styles from './style.module.css';
+import useScroll from "./hooks/useScroll";
 import { VirtualListProps } from './types';
 import VirtualRow from "./VirtualRow";
+import styles from './style.module.css';
 
 // HTMLDivElement 指定了 ref 的类型
 // VirtualListProps<any>: 泛型参数指定了数据项的类型
@@ -24,6 +25,15 @@ const VirtualList = forwardRef<HTMLDivElement, VirtualListProps<any>>(
       },
       100 // 添加100ms防抖时间
     );
+
+    // 应用 useScroll 监听滚动状态
+    const scrollState = useScroll({
+      elementRef: containerRef,
+      onScroll: ({ scrollTop }) => {
+        // 可以在这里处理滚动事件
+        console.log('当前滚动位置:', scrollTop);
+      }
+    });
 
     return (
       <div

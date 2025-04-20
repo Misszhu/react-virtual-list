@@ -103,3 +103,21 @@ export interface Size {
   /** 元素高度 */
   height: number;
 }
+
+/** 滚动状态接口 */
+export interface ScrollState {
+  /** 滚动距离 */
+  scrollTop: number;
+  /** 滚动容器的高度 */
+  scrollHeight: number;
+  /** 可视区域的高度 */
+  clientHeight: number;
+}
+
+/** useScroll hook 的属性接口 */
+export interface UseScrollProps {
+  /** 滚动容器的引用 */
+  elementRef: React.RefObject<HTMLElement | null>;
+  /** 滚动事件的回调函数 */
+  onScroll?: (state: ScrollState) => void;
+}
