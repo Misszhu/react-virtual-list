@@ -8,7 +8,7 @@ function VirtualListInner<T>(
   { data, itemHeight, renderItem, overscan = 3, className, style }: VirtualListProps<T>,
   ref: React.ForwardedRef<HTMLDivElement>
 ) {
-  const { visibleItems, totalHeight, containerRef } = useVirtual({
+  const { visibleItems, totalHeight, containerRef, updateItemHeight } = useVirtual({
     data,
     itemHeight,
     overscan,
@@ -30,6 +30,7 @@ function VirtualListInner<T>(
             offset={offset}
             height={itemHeight}
             renderItem={renderItem}
+            onHeightChange={updateItemHeight}
           />
         ))}
       </div>

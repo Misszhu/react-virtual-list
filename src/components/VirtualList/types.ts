@@ -70,6 +70,8 @@ export interface VirtualRowProps<T> {
   height: number;
   /** 渲染列表项的函数 */
   renderItem: (item: T, index: number) => React.ReactNode;
+  /** 高度变化回调函数 */
+  onHeightChange?: (index: number, height: number) => void;
 }
 
 /** 

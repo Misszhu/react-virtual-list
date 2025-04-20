@@ -1,4 +1,5 @@
-import React from 'react';
+import { useEffect, useRef } from 'react';
+import { memo } from 'react';
 import { VirtualRowProps } from './types';
 
 function VirtualRow<T>({
@@ -6,16 +7,33 @@ function VirtualRow<T>({
   index,
   offset,
   height,
-  renderItem
+  renderItem,
+  onHeightChange
 }: VirtualRowProps<T>) {
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (rowRef.current && onHeightChange) {
+      const resizeObserver = new ResizeObserver((entries) => {
+        const entry = entries[0];
+        if (entry) {
+          onHeightChange(index, entry.contentRect.height);
+        }
+      });
+
+      resizeObserver.observe(rowRef.current);
+      return () => resizeObserver.disconnect();
+    }
+  }, [index, onHeightChange]);
+
   return (
     <div
+      ref={rowRef}
       style={{
         position: 'absolute',
-        top: offset,
-        left: 0,
+        top: `${offset}px`,
         width: '100%',
-        height
+        minHeight: `${height}px`,
       }}
     >
       {renderItem(data, index)}
@@ -23,11 +41,4 @@ function VirtualRow<T>({
   );
 }
 
-// 添加显示名称，便于调试
-VirtualRow.displayName = 'VirtualRow';
-
-// 使用 memo 包裹组件并保持泛型
-const MemoizedVirtualRow = React.memo(VirtualRow) as typeof VirtualRow;
-
-
-export default MemoizedVirtualRow;
+export default memo(VirtualRow) as <T>(props: VirtualRowProps<T>) => React.ReactElement;
