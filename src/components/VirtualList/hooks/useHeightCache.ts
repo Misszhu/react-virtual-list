@@ -1,9 +1,11 @@
 import { useRef, useCallback } from 'react';
 
+/** 高度缓存 */
 interface HeightCache {
   [key: number]: number;
 }
 
+/** 偏移缓存 */
 interface OffsetCache {
   [key: number]: number;
 }
@@ -59,6 +61,7 @@ export default function useHeightCache(defaultHeight: number) {
     }
 
     lastTotalHeight.current = total;
+    // 更新 lastItemCount 为 itemCount(虚拟列表中数据的长度)
     lastItemCount.current = itemCount;
     return total;
   }, [getHeight]);

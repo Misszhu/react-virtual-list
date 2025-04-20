@@ -13,10 +13,11 @@ function VirtualRow<T>({
   const rowRef = useRef<HTMLDivElement>(null);
   const measureTimeoutRef = useRef<number | null>(null);
 
+  // TODO 使用 requestAnimationFrame 优化
   // 使用 useLayoutEffect 进行初始测量
   useLayoutEffect(() => {
     if (!rowRef.current || !onHeightChange) return;
-
+    // 如果实际高度不等于初始高度，则更新高度
     const currentHeight = rowRef.current.getBoundingClientRect().height;
     if (currentHeight > 0 && currentHeight !== height) {
       onHeightChange(index, currentHeight);
@@ -40,6 +41,7 @@ function VirtualRow<T>({
     const resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (entry) {
+        // 如果实际高度不等于初始高度，则更新高度
         const newHeight = entry.contentRect.height;
         if (newHeight > 0 && newHeight !== height) {
           onHeightChange(index, newHeight);
