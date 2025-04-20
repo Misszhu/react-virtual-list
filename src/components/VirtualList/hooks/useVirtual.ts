@@ -31,13 +31,40 @@ export default function useVirtual<T>({
     100
   );
 
-  // 根据滚动位置估算开始索引
-  const estimateStartIndex = Math.floor(scrollTop / itemHeight);
+  // 根据滚动位置查找开始索引
+  const findStartIndex = useCallback((scrollTop: number): number => {
+    let index = 0;
+    let currentOffset = 0;
 
-  // 计算可见区域的项目范围
-  const start = Math.max(0, estimateStartIndex - overscan);
-  const visibleCount = Math.ceil(containerHeight / itemHeight);
-  const end = Math.min(data.length, estimateStartIndex + visibleCount + overscan);
+    while (index < data.length) {
+      const height = heightCache.getHeight(index);
+      if (currentOffset + height > scrollTop) {
+        break;
+      }
+      currentOffset += height;
+      index++;
+    }
+
+    return Math.max(0, index - overscan);
+  }, [data.length, heightCache, overscan]);
+
+  // 根据开始索引和容器高度查找结束索引
+  const findEndIndex = useCallback((startIndex: number): number => {
+    let index = startIndex;
+    let currentOffset = heightCache.getOffset(startIndex);
+    const targetOffset = scrollTop + containerHeight;
+
+    while (index < data.length && currentOffset < targetOffset) {
+      currentOffset += heightCache.getHeight(index);
+      index++;
+    }
+
+    return Math.min(data.length, index + overscan);
+  }, [data.length, heightCache, containerHeight, scrollTop, overscan]);
+
+  // 计算可见范围
+  const start = findStartIndex(scrollTop);
+  const end = findEndIndex(start);
 
   // 更新项目高度的回调函数
   const updateItemHeight = useCallback((index: number, height: number) => {
