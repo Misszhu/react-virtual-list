@@ -4,41 +4,43 @@ import { VirtualListProps } from './types';
 import VirtualRow from "./VirtualRow";
 import styles from './style.module.css';
 
-// HTMLDivElement 指定了 ref 的类型
-// VirtualListProps<unknown>: 泛型参数指定了数据项的类型
-const VirtualList = forwardRef<HTMLDivElement, VirtualListProps<unknown>>(
-  ({ data, itemHeight, renderItem, overscan = 3, className, style }, ref) => {
-    const { visibleItems, totalHeight, containerRef } = useVirtual({
-      data,
-      itemHeight,
-      overscan,
-      ref
-    });
+function VirtualListInner<T>(
+  { data, itemHeight, renderItem, overscan = 3, className, style }: VirtualListProps<T>,
+  ref: React.ForwardedRef<HTMLDivElement>
+) {
+  const { visibleItems, totalHeight, containerRef } = useVirtual({
+    data,
+    itemHeight,
+    overscan,
+    ref
+  });
 
-    return (
-      <div
-        ref={containerRef}
-        className={`${styles.container} ${className || ''}`}
-        style={{ ...style, position: 'relative', overflow: 'auto' }}
-      >
-        <div style={{ height: `${totalHeight}px`, position: 'relative' }}>
-          {visibleItems.map(({ data, index, offset }) => (
-            <VirtualRow
-              key={index}
-              data={data}
-              index={index}
-              offset={offset}
-              height={itemHeight}
-              renderItem={renderItem}
-            />
-          ))}
-        </div>
+  return (
+    <div
+      ref={containerRef}
+      className={`${styles.container} ${className || ''}`}
+      style={{ ...style, position: 'relative', overflow: 'auto' }}
+    >
+      <div style={{ height: `${totalHeight}px`, position: 'relative' }}>
+        {visibleItems.map(({ data, index, offset }) => (
+          <VirtualRow
+            key={index}
+            data={data}
+            index={index}
+            offset={offset}
+            height={itemHeight}
+            renderItem={renderItem}
+          />
+        ))}
       </div>
-    );
-  }
-);
+    </div>
+  );
+}
 
-// 添加 displayName
-VirtualList.displayName = 'VirtualList';
+VirtualListInner.displayName = 'VirtualList';
+
+const VirtualList = forwardRef(VirtualListInner) as <T>(
+  props: VirtualListProps<T> & { ref?: React.ForwardedRef<HTMLDivElement> }
+) => React.ReactElement;
 
 export default VirtualList;
