@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useEffect } from 'react';
 import { memo } from 'react';
 import { VirtualRowProps } from './types';
 
@@ -11,20 +11,51 @@ function VirtualRow<T>({
   onHeightChange
 }: VirtualRowProps<T>) {
   const rowRef = useRef<HTMLDivElement>(null);
+  const measureTimeoutRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    if (rowRef.current && onHeightChange) {
-      const resizeObserver = new ResizeObserver((entries) => {
-        const entry = entries[0];
-        if (entry) {
-          onHeightChange(index, entry.contentRect.height);
+  // 使用 useLayoutEffect 进行初始测量
+  useLayoutEffect(() => {
+    if (!rowRef.current || !onHeightChange) return;
+
+    const currentHeight = rowRef.current.getBoundingClientRect().height;
+    if (currentHeight > 0 && currentHeight !== height) {
+      onHeightChange(index, currentHeight);
+    } else {
+      // 如果初始测量失败，设置一个短暂的延时重试
+      measureTimeoutRef.current = window.setTimeout(() => {
+        if (rowRef.current) {
+          const retryHeight = rowRef.current.getBoundingClientRect().height;
+          if (retryHeight > 0 && retryHeight !== height) {
+            onHeightChange(index, retryHeight);
+          }
         }
-      });
-
-      resizeObserver.observe(rowRef.current);
-      return () => resizeObserver.disconnect();
+      }, 0);
     }
-  }, [index, onHeightChange]);
+  }, [index, height, onHeightChange]);
+
+  // 使用 useEffect 监听尺寸变化
+  useEffect(() => {
+    if (!rowRef.current || !onHeightChange) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        const newHeight = entry.contentRect.height;
+        if (newHeight > 0 && newHeight !== height) {
+          onHeightChange(index, newHeight);
+        }
+      }
+    });
+
+    resizeObserver.observe(rowRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+      if (measureTimeoutRef.current !== null) {
+        clearTimeout(measureTimeoutRef.current);
+      }
+    };
+  }, [index, height, onHeightChange]);
 
   return (
     <div
@@ -34,6 +65,7 @@ function VirtualRow<T>({
         top: `${offset}px`,
         width: '100%',
         minHeight: `${height}px`,
+        boxSizing: 'border-box'
       }}
     >
       {renderItem(data, index)}

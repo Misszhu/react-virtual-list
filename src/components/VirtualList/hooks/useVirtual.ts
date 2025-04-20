@@ -13,6 +13,9 @@ export default function useVirtual<T>({
   const localRef = useRef<HTMLDivElement>(null);
   const containerRef = typeof ref === 'function' ? localRef : (ref || localRef);
   const [containerHeight, setContainerHeight] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const lastStartRef = useRef(0);
+  const lastEndRef = useRef(0);
 
   // 使用高度缓存
   const heightCache = useHeightCache(itemHeight);
@@ -27,6 +30,9 @@ export default function useVirtual<T>({
     containerRef,
     ({ height }) => {
       setContainerHeight(height);
+      if (height > 0 && !isInitialized) {
+        setIsInitialized(true);
+      }
     },
     100
   );
@@ -63,22 +69,46 @@ export default function useVirtual<T>({
   }, [data.length, heightCache, containerHeight, scrollTop, overscan]);
 
   // 计算可见范围
-  const start = findStartIndex(scrollTop);
-  const end = findEndIndex(start);
+  const calculateVisibleRange = useCallback(() => {
+    const start = findStartIndex(scrollTop);
+    const end = findEndIndex(start);
+
+    // 如果范围没有变化，使用上一次的范围
+    if (start === lastStartRef.current && end === lastEndRef.current) {
+      return { start: lastStartRef.current, end: lastEndRef.current };
+    }
+
+    lastStartRef.current = start;
+    lastEndRef.current = end;
+    return { start, end };
+  }, [findStartIndex, findEndIndex, scrollTop]);
 
   // 更新项目高度的回调函数
   const updateItemHeight = useCallback((index: number, height: number) => {
     heightCache.setHeight(index, height);
   }, [heightCache]);
 
-  const visibleItems = data.slice(start, end).map((item, index) => ({
+  // 计算可见项目
+  const { start, end } = calculateVisibleRange();
+  const visibleItems = data.slice(start, end).map((item, index) => {
+    const actualIndex = start + index;
+    const offset = heightCache.getOffset(actualIndex);
+    return {
+      data: item,
+      index: actualIndex,
+      offset,
+    };
+  });
+
+  // 初始化时预渲染更多项目
+  const initialVisibleItems = !isInitialized ? data.slice(0, 10).map((item, index) => ({
     data: item,
-    index: start + index,
-    offset: heightCache.getOffset(start + index),
-  }));
+    index: index,
+    offset: heightCache.getOffset(index),
+  })) : visibleItems;
 
   return {
-    visibleItems,
+    visibleItems: isInitialized ? visibleItems : initialVisibleItems,
     containerRef,
     totalHeight: heightCache.getTotalHeight(data.length),
     updateItemHeight,

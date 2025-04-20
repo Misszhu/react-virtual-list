@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback } from 'react';
 
 interface HeightCache {
   [key: number]: number;
@@ -8,80 +8,47 @@ interface OffsetCache {
   [key: number]: number;
 }
 
-interface UpdateQueue {
-  index: number;
-  height: number;
-}
-
 export default function useHeightCache(defaultHeight: number) {
   const heightCache = useRef<HeightCache>({});
   const offsetCache = useRef<OffsetCache>({});
   const lastTotalHeight = useRef<number>(0);
   const lastItemCount = useRef<number>(0);
-  const updateQueue = useRef<UpdateQueue[]>([]);
-  const updateTimeoutRef = useRef<number | null>(null);
 
-  // 批量处理更新队列
-  const processUpdateQueue = useCallback(() => {
-    if (updateQueue.current.length === 0) return;
+  // 重新计算所有 offset
+  const recalculateOffsets = useCallback((itemCount?: number) => {
+    offsetCache.current = {};
+    let currentOffset = 0;
 
-    // 按索引排序确保顺序更新
-    updateQueue.current.sort((a, b) => a.index - b.index);
+    // 使用传入的 itemCount 或者已知的最大索引来确定循环范围
+    const maxCachedIndex = Math.max(...Object.keys(heightCache.current).map(Number), -1);
+    const maxIndex = itemCount !== undefined ? itemCount - 1 : maxCachedIndex;
 
-    updateQueue.current.forEach(({ index, height }) => {
-      if (heightCache.current[index] !== height) {
-        heightCache.current[index] = height;
-        // 清除受影响的偏移量缓存
-        Object.keys(offsetCache.current).forEach(key => {
-          if (Number(key) >= index) {
-            delete offsetCache.current[Number(key)];
-          }
-        });
-      }
-    });
-
-    // 重置总高度缓存
-    lastTotalHeight.current = 0;
-    // 清空队列
-    updateQueue.current = [];
-  }, []);
-
-  // 组件卸载时清理
-  useEffect(() => {
-    return () => {
-      if (updateTimeoutRef.current !== null) {
-        clearTimeout(updateTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const setHeight = useCallback((index: number, height: number) => {
-    // 将更新添加到队列
-    updateQueue.current.push({ index, height });
-
-    // 清除之前的定时器
-    if (updateTimeoutRef.current !== null) {
-      clearTimeout(updateTimeoutRef.current);
+    // 从 0 开始逐个计算 offset
+    for (let index = 0; index <= maxIndex; index++) {
+      offsetCache.current[index] = currentOffset;
+      const height = heightCache.current[index] || defaultHeight;
+      currentOffset += height;
     }
 
-    // 设置新的定时器，延迟处理更新队列
-    updateTimeoutRef.current = window.setTimeout(() => {
-      processUpdateQueue();
-      updateTimeoutRef.current = null;
-    }, 0);
-  }, [processUpdateQueue]);
+    return currentOffset;
+  }, [defaultHeight]);
+
+  const setHeight = useCallback((index: number, height: number) => {
+    if (heightCache.current[index] === height) {
+      return; // 如果高度没有变化，直接返回
+    }
+
+    heightCache.current[index] = height;
+    // 重新计算所有 offset，传入 lastItemCount 确保计算所有项的 offset
+    const totalHeight = recalculateOffsets(lastItemCount.current);
+    lastTotalHeight.current = totalHeight;
+  }, [recalculateOffsets]);
 
   const getHeight = useCallback((index: number) => {
     return heightCache.current[index] || defaultHeight;
   }, [defaultHeight]);
 
   const getTotalHeight = useCallback((itemCount: number) => {
-    // 如果有未处理的更新，先处理
-    if (updateQueue.current.length > 0) {
-      processUpdateQueue();
-    }
-
-    // 如果项目数量没变且已有缓存，直接返回
     if (itemCount === lastItemCount.current && lastTotalHeight.current > 0) {
       return lastTotalHeight.current;
     }
@@ -91,39 +58,28 @@ export default function useHeightCache(defaultHeight: number) {
       total += getHeight(i);
     }
 
-    // 更新缓存
     lastTotalHeight.current = total;
     lastItemCount.current = itemCount;
     return total;
-  }, [getHeight, processUpdateQueue]);
+  }, [getHeight]);
 
   const getOffset = useCallback((index: number) => {
-    // 如果有未处理的更新，先处理
-    if (updateQueue.current.length > 0) {
-      processUpdateQueue();
-    }
-
     if (index === 0) return 0;
 
-    // 检查缓存
     if (offsetCache.current[index] !== undefined) {
       return offsetCache.current[index];
     }
 
-    let offset = 0;
-    for (let i = 0; i < index; i++) {
-      offset += getHeight(i);
-    }
-
-    // 存储到缓存
-    offsetCache.current[index] = offset;
-    return offset;
-  }, [getHeight, processUpdateQueue]);
+    // 如果没有缓存，重新计算所有 offset，使用 lastItemCount 确保计算所有项的 offset
+    recalculateOffsets(lastItemCount.current);
+    return offsetCache.current[index] || 0;
+  }, [recalculateOffsets]);
 
   return {
     setHeight,
     getHeight,
     getTotalHeight,
-    getOffset
+    getOffset,
+    recalculateOffsets
   };
 } 
