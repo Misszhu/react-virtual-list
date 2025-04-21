@@ -39,10 +39,12 @@ function VirtualRow<T>({
 
     // 开始测量
     rafRef.current = requestAnimationFrame(measure);
-
+    // 清理函数在以下情况执行：
+    // 1. 组件卸载
+    // 2. 组件重新渲染
+    // 3. 组件的依赖项index/height/onHeightChange发生变化
     return () => {
       if (rafRef.current !== null) {
-        // 组件卸载时取消测量
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
       }
