@@ -1,4 +1,4 @@
-import { useLayoutEffect, useEffect, useRef } from 'react';
+import { useLayoutEffect, useEffect, useRef, useState } from 'react';
 
 interface UseDynamicHeightProps {
   elementRef: React.RefObject<HTMLElement | null>;
@@ -16,6 +16,7 @@ export default function useDynamicHeight({
   const rafRef = useRef<number | null>(null);
   const measureAttempts = useRef(0);
   const MAX_MEASURE_ATTEMPTS = 3;
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // 初始测量
   useLayoutEffect(() => {
@@ -29,6 +30,7 @@ export default function useDynamicHeight({
       if (height > 0 && height !== currentHeight) {
         onHeightChange(index, height);
         measureAttempts.current = 0;
+        setIsInitialized(true);
       } else if (measureAttempts.current < MAX_MEASURE_ATTEMPTS) {
         measureAttempts.current++;
         rafRef.current = requestAnimationFrame(measure);
@@ -56,6 +58,7 @@ export default function useDynamicHeight({
         if (newHeight > 0 && newHeight !== currentHeight) {
           rafRef.current = requestAnimationFrame(() => {
             onHeightChange(index, newHeight);
+            setIsInitialized(true);
           });
         }
       }
@@ -71,4 +74,6 @@ export default function useDynamicHeight({
       }
     };
   }, [elementRef, currentHeight, index, onHeightChange]);
+
+  return { isInitialized };
 } 
