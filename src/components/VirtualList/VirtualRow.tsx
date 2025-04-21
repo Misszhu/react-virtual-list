@@ -11,40 +11,57 @@ function VirtualRow<T>({
   onHeightChange
 }: VirtualRowProps<T>) {
   const rowRef = useRef<HTMLDivElement>(null);
-  const measureTimeoutRef = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const measureAttempts = useRef(0);
+  // 最大测量次数
+  const MAX_MEASURE_ATTEMPTS = 3;
 
-  // TODO 使用 requestAnimationFrame 优化
   // 使用 useLayoutEffect 进行初始测量
   useLayoutEffect(() => {
     if (!rowRef.current || !onHeightChange) return;
-    // 如果实际高度不等于初始高度，则更新高度
-    const currentHeight = rowRef.current.getBoundingClientRect().height;
-    if (currentHeight > 0 && currentHeight !== height) {
-      onHeightChange(index, currentHeight);
-    } else {
-      // 如果初始测量失败，设置一个短暂的延时重试
-      measureTimeoutRef.current = window.setTimeout(() => {
-        if (rowRef.current) {
-          const retryHeight = rowRef.current.getBoundingClientRect().height;
-          if (retryHeight > 0 && retryHeight !== height) {
-            onHeightChange(index, retryHeight);
-          }
-        }
-      }, 0);
-    }
+
+    const measure = () => {
+      if (!rowRef.current) return;
+
+      const currentHeight = rowRef.current.getBoundingClientRect().height;
+
+      if (currentHeight > 0 && currentHeight !== height) {
+        // 高度有效且发生变化，更新高度
+        onHeightChange(index, currentHeight);
+        measureAttempts.current = 0;
+      } else if (measureAttempts.current < MAX_MEASURE_ATTEMPTS) {
+        // 如果测量失败或高度为0，且未超过最大重试次数，则在下一帧重试
+        measureAttempts.current++;
+        // 记录标识，用于取消测量
+        rafRef.current = requestAnimationFrame(measure);
+      }
+    };
+
+    // 开始测量
+    rafRef.current = requestAnimationFrame(measure);
+
+    return () => {
+      if (rafRef.current !== null) {
+        // 组件卸载时取消测量
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
   }, [index, height, onHeightChange]);
 
-  // 使用 useEffect 监听尺寸变化
+  // 使用 ResizeObserver 监听尺寸变化
   useEffect(() => {
     if (!rowRef.current || !onHeightChange) return;
 
     const resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (entry) {
-        // 如果实际高度不等于初始高度，则更新高度
         const newHeight = entry.contentRect.height;
         if (newHeight > 0 && newHeight !== height) {
-          onHeightChange(index, newHeight);
+          // 使用 requestAnimationFrame 确保在下一帧更新高度
+          rafRef.current = requestAnimationFrame(() => {
+            onHeightChange(index, newHeight);
+          });
         }
       }
     });
@@ -53,8 +70,9 @@ function VirtualRow<T>({
 
     return () => {
       resizeObserver.disconnect();
-      if (measureTimeoutRef.current !== null) {
-        clearTimeout(measureTimeoutRef.current);
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
       }
     };
   }, [index, height, onHeightChange]);
