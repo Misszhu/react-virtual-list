@@ -1,5 +1,5 @@
-import { ForwardedRef, CSSProperties } from 'react';
-import { ScrollDirection } from './hooks/useScroll';
+import { ForwardedRef, CSSProperties, ReactNode, RefObject } from 'react';
+import { ScrollDirection, ScrollSpeed } from './hooks/useScroll';
 
 /** 
  * 虚拟列表组件的属性接口
@@ -119,6 +119,10 @@ export interface ScrollState {
   clientHeight: number;
   /** 滚动方向 */
   scrollDirection?: ScrollDirection;
+  /** 是否正在滚动 */
+  isScrolling?: boolean;
+  /** 滚动速度 */
+  scrollSpeed?: ScrollSpeed;
 }
 
 /** useScroll hook 的属性接口 */
@@ -129,4 +133,81 @@ export interface UseScrollProps {
   onScroll?: (state: ScrollState) => void;
   /** 节流时间（毫秒） */
   throttleMs?: number;
+}
+
+// 数据项接口
+export interface Item {
+  id: string | number;
+  [key: string]: any;
+}
+
+// renderItem 函数类型
+export type RenderItem<T extends Item> = (props: {
+  item: T;
+  index: number;
+  style?: CSSProperties;
+}) => ReactNode;
+
+// VirtualList props 接口
+export interface VirtualListProps<T extends Item> {
+  items: T[];
+  height: number;
+  itemCount?: number;
+  overscan?: number;
+  renderItem: RenderItem<T>;
+  itemEstimatedHeight?: number;
+  onItemsRendered?: (params: {
+    startIndex: number;
+    endIndex: number;
+    visibleStartIndex: number;
+    visibleEndIndex: number;
+  }) => void;
+  className?: string;
+  style?: CSSProperties;
+}
+
+// useVirtual 返回类型
+export interface UseVirtualReturn<T extends Item> {
+  virtualItems: Array<{
+    item: T;
+    index: number;
+    offsetTop: number;
+    height: number;
+  }>;
+  totalHeight: number;
+  scrollState: ScrollState;
+}
+
+// VirtualRow props 接口
+export interface VirtualRowProps<T extends Item> {
+  index: number;
+  item: T;
+  offsetTop: number;
+  height: number;
+  scrollState: ScrollState;
+  renderItem: RenderItem<T>;
+  measureHeight?: (index: number, height: number) => void;
+}
+
+// UseVirtualProps 接口
+export interface UseVirtualProps<T extends Item> {
+  items: T[];
+  scrollElementRef: RefObject<HTMLElement>;
+  itemEstimatedHeight?: number;
+  overscan?: number;
+  onItemsRendered?: (params: {
+    startIndex: number;
+    endIndex: number;
+    visibleStartIndex: number;
+    visibleEndIndex: number;
+  }) => void;
+}
+
+// UseHeightCacheReturn 接口
+export interface UseHeightCacheReturn {
+  getHeight: (index: number) => number;
+  getOffset: (index: number) => number;
+  setHeight: (index: number, height: number) => void;
+  getTotalHeight: () => number;
+  invalidate: (startIndex?: number) => void;
 }

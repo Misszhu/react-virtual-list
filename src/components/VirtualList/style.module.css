@@ -1,14 +1,52 @@
 .container {
   position: relative;
   overflow: auto;
-  will-change: transform;
   -webkit-overflow-scrolling: touch; /* 平滑滚动 */
+  /* 启用滚动容器的硬件加速 */
+  transform: translateZ(0);
+  will-change: scroll-position;
+  backface-visibility: hidden;
+  perspective: 1000;
 }
 
 /* 隐藏默认滚动条（可选） */
 .container::-webkit-scrollbar {
   width: 0;
   background: transparent;
+}
+
+/* 虚拟列表行样式 */
+.virtualRow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* 使用 transform 进行定位，启用硬件加速 */
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  /* 添加过渡效果，滚动中禁用过渡 */
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+/* 滚动时禁用过渡 */
+.scrolling {
+  transition: none !important;
+  pointer-events: none; /* 滚动时禁用交互 */
+}
+
+/* 高速滚动时样式 */
+.fastScrolling {
+  /* 高速滚动时可以应用模糊效果 */
+  filter: blur(0.5px);
+  opacity: 0.95;
+}
+
+/* 内容样式 */
+.content {
+  width: 100%;
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  transition: opacity 0.2s ease-out;
 }
 
 .placeholder {
@@ -30,5 +68,16 @@
   100% {
     background-position: 200% 0;
     opacity: 0.8;
+  }
+}
+
+/* 触摸设备优化 */
+@media (pointer: coarse) {
+  .container {
+    overflow-scrolling: touch;
+  }
+  
+  .fastScrolling {
+    filter: none; /* 移动设备上禁用模糊效果，提高性能 */
   }
 }
