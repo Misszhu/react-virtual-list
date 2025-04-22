@@ -122,4 +122,6 @@ export interface UseScrollProps {
   elementRef: React.RefObject<HTMLElement | null>;
   /** 滚动事件的回调函数 */
   onScroll?: (state: ScrollState) => void;
+  /** 节流时间（毫秒） */
+  throttleMs?: number;
 }
