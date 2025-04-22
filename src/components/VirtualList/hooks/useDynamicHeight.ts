@@ -1,4 +1,5 @@
 import { useLayoutEffect, useEffect, useRef, useState } from 'react';
+import { debounce } from '../utils/debounce';
 
 interface UseDynamicHeightProps {
   elementRef: React.RefObject<HTMLElement | null>;
@@ -17,6 +18,16 @@ export default function useDynamicHeight({
   const measureAttempts = useRef(0);
   const MAX_MEASURE_ATTEMPTS = 3;
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // 使用 useRef 来存储防抖函数，避免重复创建
+  const debouncedHeightChange = useRef(
+    debounce((height: number) => {
+      if (height > 0 && height !== currentHeight) {
+        onHeightChange?.(index, height);
+        setIsInitialized(true);
+      }
+    }, 100)
+  );
 
   // 初始测量
   useLayoutEffect(() => {
@@ -55,12 +66,7 @@ export default function useDynamicHeight({
       const entry = entries[0];
       if (entry) {
         const newHeight = entry.contentRect.height;
-        if (newHeight > 0 && newHeight !== currentHeight) {
-          rafRef.current = requestAnimationFrame(() => {
-            onHeightChange(index, newHeight);
-            setIsInitialized(true);
-          });
-        }
+        debouncedHeightChange.current(newHeight);
       }
     });
 
