@@ -1,4 +1,5 @@
 import { ForwardedRef, CSSProperties } from 'react';
+import { ScrollDirection } from './hooks/useScroll';
 
 /** 
  * 虚拟列表组件的属性接口
@@ -72,6 +73,8 @@ export interface VirtualRowProps<T> {
   renderItem: (item: T, index: number) => React.ReactNode;
   /** 高度变化回调函数 */
   onHeightChange?: (index: number, height: number) => void;
+  /** 可见性变化回调函数 */
+  onVisible?: (index: number, visible: boolean) => void;
 }
 
 /** 
@@ -114,6 +117,8 @@ export interface ScrollState {
   scrollHeight: number;
   /** 可视区域的高度 */
   clientHeight: number;
+  /** 滚动方向 */
+  scrollDirection?: ScrollDirection;
 }
 
 /** useScroll hook 的属性接口 */

@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useCallback } from "react";
 import useVirtual from './hooks/useVirtual';
 import { VirtualListProps } from './types';
 import VirtualRow from "./VirtualRow";
@@ -15,6 +15,14 @@ function VirtualListInner<T>(
     ref
   });
 
+  // 处理可见性变化
+  const handleVisible = useCallback((index: number, visible: boolean) => {
+    // 可以在这里处理可见性变化，例如：
+    // - 加载数据
+    // - 更新状态
+    // - 触发回调
+    console.log(`Item ${index} is ${visible ? 'visible' : 'hidden'}`);
+  }, []);
 
   return (
     <div
@@ -32,6 +40,7 @@ function VirtualListInner<T>(
             height={itemHeight}
             renderItem={renderItem}
             onHeightChange={updateItemHeight}
+            onVisible={handleVisible}
           />
         ))}
       </div>

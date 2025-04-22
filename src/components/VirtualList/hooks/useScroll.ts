@@ -2,18 +2,20 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import { ScrollState, UseScrollProps } from '../types';
 import { throttle } from '../utils/throttle';
 
+export type ScrollDirection = 'up' | 'down' | 'none';
+
 /**
  * 管理滚动状态的 Hook
  * @param elementRef - 滚动容器的引用
  * @param onScroll - 滚动事件的回调函数
  * @param throttleMs - 节流时间（毫秒）
- * @returns 滚动状态
+ * @returns 滚动状态和方向
  */
 export default function useScroll({
   elementRef,
   onScroll,
   throttleMs = 16 // 默认 16ms，约等于 60fps
-}: UseScrollProps): ScrollState {
+}: UseScrollProps): ScrollState & { scrollDirection: ScrollDirection } {
   // 初始化滚动状态
   const [scrollState, setScrollState] = useState<ScrollState>({
     scrollTop: 0,
@@ -21,14 +23,34 @@ export default function useScroll({
     clientHeight: 0
   });
 
+  const [scrollDirection, setScrollDirection] = useState<ScrollDirection>('none');
+  const prevScrollTopRef = useRef(0);
+
   // 使用 useRef 来存储节流函数，避免重复创建
   const throttledHandleScroll = useRef(
     throttle(() => {
       const element = elementRef.current;
       if (!element) return;
 
+      const newScrollTop = element.scrollTop;
+      const prevScrollTop = prevScrollTopRef.current;
+
+      // 检测滚动方向
+      let direction: ScrollDirection = 'none';
+      if (newScrollTop > prevScrollTop) {
+        direction = 'down';
+      } else if (newScrollTop < prevScrollTop) {
+        direction = 'up';
+      }
+
+      prevScrollTopRef.current = newScrollTop;
+
+      if (direction !== 'none') {
+        setScrollDirection(direction);
+      }
+
       const newState = {
-        scrollTop: element.scrollTop,
+        scrollTop: newScrollTop,
         scrollHeight: element.scrollHeight,
         clientHeight: element.clientHeight
       };
@@ -59,5 +81,5 @@ export default function useScroll({
     };
   }, [elementRef, handleScroll]);
 
-  return scrollState;
+  return { ...scrollState, scrollDirection };
 }
