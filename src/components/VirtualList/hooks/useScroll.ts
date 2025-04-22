@@ -1,26 +1,6 @@
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { ScrollState, UseScrollProps } from '../types';
-
-/**
- * 节流函数
- */
-// TODO 调试性能
-function throttle<T extends (...args: unknown[]) => void>(
-  fn: T,
-  delay: number
-): (...args: Parameters<T>) => void {
-  let lastCall = 0;
-  return (...args: Parameters<T>) => {
-    const now = Date.now();
-    if (now - lastCall >= delay) {
-      lastCall = now;
-      performance.mark('throttle-start');
-      fn(...args);
-      performance.mark('throttle-end');
-      performance.measure('throttle-execution', 'throttle-start', 'throttle-end');
-    }
-  };
-}
+import { throttle } from '../utils/throttle';
 
 /**
  * 管理滚动状态的 Hook

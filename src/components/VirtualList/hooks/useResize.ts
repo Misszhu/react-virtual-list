@@ -1,20 +1,6 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { Size } from '../types';
-
-/**
- * 防抖函数
- */
-function debounce(
-  fn: (size: Size) => void,
-  delay: number
-): (size: Size) => void {
-  let timeoutId: ReturnType<typeof setTimeout>;
-
-  return function (size: Size) {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => fn(size), delay);
-  };
-}
+import { debounce } from '../utils/debounce';
 
 /**
  * 监听元素大小变化的 Hook
@@ -23,27 +9,27 @@ function debounce(
  * @param debounceMs - 防抖时间（毫秒）
  */
 export default function useResize(
-  elementRef: React.RefObject<HTMLDivElement | null>, // 直接使用 HTMLDivElement
+  elementRef: React.RefObject<HTMLDivElement | null>,
   callback: (size: Size) => void,
-  debounceMs: number = 0
+  debounceMs: number = 100
 ) {
-  // 使用 useCallback 缓存回调函数，并应用防抖
+  // 使用 useRef 来存储防抖函数，避免重复创建
+  const debouncedCallback = useRef(
+    debounce((size: Size) => {
+      callback(size);
+    }, debounceMs)
+  );
+
+  // 使用 useCallback 缓存回调函数
   const handleResize = useCallback(
     (entries: ResizeObserverEntry[]) => {
       const entry = entries[0];
       if (entry) {
         const { width, height } = entry.contentRect;
-        if (debounceMs > 0) {
-          // 使用防抖包装回调函数
-          const debouncedCallback = debounce(callback, debounceMs);
-          debouncedCallback({ width, height });
-        } else {
-          // 直接调用回调函数
-          callback({ width, height });
-        }
+        debouncedCallback.current({ width, height });
       }
     },
-    [callback, debounceMs]
+    []
   );
 
   useEffect(() => {
