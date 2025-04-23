@@ -1,14 +1,14 @@
 import { forwardRef, useCallback } from "react";
 import useVirtual from './hooks/useVirtual';
-import { VirtualListProps } from './types';
+import { VirtualListProps, Item } from './types';
 import VirtualRow from "./VirtualRow";
 import styles from './style.module.css';
 
-function VirtualListInner<T>(
+function VirtualListInner<T extends Item>(
   { data, itemHeight, renderItem, overscan = 3, className, style }: VirtualListProps<T>,
   ref: React.ForwardedRef<HTMLDivElement>
 ) {
-  const { visibleItems, totalHeight, containerRef, updateItemHeight } = useVirtual({
+  const { visibleItems, totalHeight, containerRef, updateItemHeight } = useVirtual<T>({
     data,
     itemHeight,
     overscan,
@@ -32,7 +32,7 @@ function VirtualListInner<T>(
     >
       <div style={{ height: `${totalHeight}px`, position: 'relative' }}>
         {visibleItems.map(({ data, index, offset }) => (
-          <VirtualRow
+          <VirtualRow<T>
             key={index}
             data={data}
             index={index}
@@ -50,7 +50,7 @@ function VirtualListInner<T>(
 
 VirtualListInner.displayName = 'VirtualList';
 
-const VirtualList = forwardRef(VirtualListInner) as <T>(
+const VirtualList = forwardRef(VirtualListInner) as <T extends Item>(
   props: VirtualListProps<T> & { ref?: React.ForwardedRef<HTMLDivElement> }
 ) => React.ReactElement;
 

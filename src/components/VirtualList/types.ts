@@ -1,11 +1,20 @@
-import { ForwardedRef, CSSProperties, ReactNode, RefObject } from 'react';
+import { ForwardedRef, CSSProperties } from 'react';
 import { ScrollDirection, ScrollSpeed } from './hooks/useScroll';
+
+/**
+ * 通用Item类型，确保泛型约束
+ * 使用Record<string, unknown>代替any
+ */
+export interface Item {
+  // 至少要有一个字段，避免空接口警告
+  [key: string]: unknown;
+}
 
 /** 
  * 虚拟列表组件的属性接口
  * @template T - 列表数据项的类型
  */
-export interface VirtualListProps<T> {
+export interface VirtualListProps<T extends Item> {
   /** 要渲染的数据数组 */
   data: T[];
   /** 每个列表项的固定高度（单位：像素） */
@@ -29,7 +38,7 @@ export interface VirtualListProps<T> {
  * 虚拟列表 Hook 的属性接口
  * @template T - 列表数据项的类型
  */
-export interface UseVirtualProps<T = unknown> {
+export interface UseVirtualProps<T extends Item> {
   /** 要渲染的数据数组 */
   data: T[];
   /** 每个列表项的固定高度（单位：像素） */
@@ -60,7 +69,7 @@ export interface GetRangeParams {
  * 虚拟列表行组件的属性接口
  * @template T - 列表项数据的类型
  */
-export interface VirtualRowProps<T> {
+export interface VirtualRowProps<T extends Item> {
   /** 列表项数据 */
   data: T;
   /** 列表项索引 */
@@ -133,81 +142,4 @@ export interface UseScrollProps {
   onScroll?: (state: ScrollState) => void;
   /** 节流时间（毫秒） */
   throttleMs?: number;
-}
-
-// 数据项接口
-export interface Item {
-  id: string | number;
-  [key: string]: any;
-}
-
-// renderItem 函数类型
-export type RenderItem<T extends Item> = (props: {
-  item: T;
-  index: number;
-  style?: CSSProperties;
-}) => ReactNode;
-
-// VirtualList props 接口
-export interface VirtualListProps<T extends Item> {
-  items: T[];
-  height: number;
-  itemCount?: number;
-  overscan?: number;
-  renderItem: RenderItem<T>;
-  itemEstimatedHeight?: number;
-  onItemsRendered?: (params: {
-    startIndex: number;
-    endIndex: number;
-    visibleStartIndex: number;
-    visibleEndIndex: number;
-  }) => void;
-  className?: string;
-  style?: CSSProperties;
-}
-
-// useVirtual 返回类型
-export interface UseVirtualReturn<T extends Item> {
-  virtualItems: Array<{
-    item: T;
-    index: number;
-    offsetTop: number;
-    height: number;
-  }>;
-  totalHeight: number;
-  scrollState: ScrollState;
-}
-
-// VirtualRow props 接口
-export interface VirtualRowProps<T extends Item> {
-  index: number;
-  item: T;
-  offsetTop: number;
-  height: number;
-  scrollState: ScrollState;
-  renderItem: RenderItem<T>;
-  measureHeight?: (index: number, height: number) => void;
-}
-
-// UseVirtualProps 接口
-export interface UseVirtualProps<T extends Item> {
-  items: T[];
-  scrollElementRef: RefObject<HTMLElement>;
-  itemEstimatedHeight?: number;
-  overscan?: number;
-  onItemsRendered?: (params: {
-    startIndex: number;
-    endIndex: number;
-    visibleStartIndex: number;
-    visibleEndIndex: number;
-  }) => void;
-}
-
-// UseHeightCacheReturn 接口
-export interface UseHeightCacheReturn {
-  getHeight: (index: number) => number;
-  getOffset: (index: number) => number;
-  setHeight: (index: number, height: number) => void;
-  getTotalHeight: () => number;
-  invalidate: (startIndex?: number) => void;
 }
